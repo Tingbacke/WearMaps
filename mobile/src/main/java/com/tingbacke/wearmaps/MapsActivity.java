@@ -5,22 +5,17 @@ package com.tingbacke.wearmaps;
  * From tutorial: http://blog.teamtreehouse.com/beginners-guide-location-android
  */
 
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.content.IntentSender;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationManager;
-import android.provider.SyncStateContract;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.Geofence;
-import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -122,7 +117,44 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
 
         mMap.setMyLocationEnabled(true);
 
-        //mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
+        /**
+         * https://geolocation.ws/map/55.588227,13.002735/13/en?types=&limit=300&licenses=
+         */
+
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.61015,12.9786)).title("Cykelpump Kockums Torg"));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.5877, 12.9887)).title("Cykelpump Malmö gamla stadion"));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.6093, 12.9967)).title("Cykelpump, Anna Linds plats"));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.6025, 12.9679)).title("Cykelpump, Ribersborgsstigen"));
+
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.6131,12.9767)).title("Turning Torso"));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.6140, 12.9839)).title("Stapelbäddsparken, skatepark"));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.6125, 12.9914)).title("Media Evolution City"));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.6144, 12.9895)).title("Doc Piazza Trattoria"));
+
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.6156, 12.9857)).title("Kranen K3, Malmö Högskola"));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.6150, 12.9858)).title("Ubåtshallen"));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.6108, 12.9949)).title("Orkanen, Malmö Högskola"));
+
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.5850,12.9873)).title("Swedbank Stadion"));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.5922, 12.9975)).title("Pildammsparken Entré"));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.5901, 12.9887)).title("Pildammsparken Tallriken"));
+
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.5890, 12.9825)).title("Jet bensinmack, Lorensborg"));
+
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.6048, 12.9658)).title("Ribersborgs Kallbadhus"));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.6041, 12.9735)).title("Toalett, Ribersborgsstigen"));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.6086, 12.9774)).title("Kockum fritid"));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.6138, 12.9812)).title("Varvsparken"));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.6137, 12.9725)).title("Daniabadet, Västra Hamnen"));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.6171, 12.9744)).title("Scaniabadet, Västra Hamnen"));
+        //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
+        //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
+        //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
+        //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
+        //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
+        //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
+
+
         mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 
         // Get LocationManager object from System Service LOCATION_SERVICE
@@ -163,6 +195,8 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
         LatLng myCoordinates = new LatLng(latitude, longitude);
         CameraUpdate yourLocation = CameraUpdateFactory.newLatLngZoom(myCoordinates, 15);
         mMap.animateCamera(yourLocation);
+
+
 
     }
 
