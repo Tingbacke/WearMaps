@@ -189,14 +189,9 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
                 .build();
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
-        /**
-         * Updating camera to my current position, I THINK!
-         */
         LatLng myCoordinates = new LatLng(latitude, longitude);
         CameraUpdate yourLocation = CameraUpdateFactory.newLatLngZoom(myCoordinates, 15);
         mMap.animateCamera(yourLocation);
-
-
 
     }
 
