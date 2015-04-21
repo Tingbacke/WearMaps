@@ -26,12 +26,22 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".MapsActivity"
+            android:name=".MobileActivity"
             android:label="WearMap" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.tingbacke.wearmaps.GetData"
+            android:label="WearMap" >
+            <intent-filter>
+                <action android:name="com.tingbacke.wearmaps.GETDATA" />
+
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 

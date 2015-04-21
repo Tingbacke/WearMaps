@@ -29,19 +29,19 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 
-public class MapsActivity extends FragmentActivity implements GoogleApiClient.ConnectionCallbacks,
+public class MobileActivity extends FragmentActivity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private GoogleApiClient mGoogleApiClient;
-    public static final String TAG = MapsActivity.class.getSimpleName();
+    public static final String TAG = MobileActivity.class.getSimpleName();
     private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
     private LocationRequest mLocationRequest;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_maps);
+        setContentView(R.layout.activity_mobile);
         setUpMapIfNeeded();
 
         UiSettings mapSettings;
@@ -121,12 +121,12 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
          * https://geolocation.ws/map/55.588227,13.002735/13/en?types=&limit=300&licenses=
          */
 
-        mMap.addMarker(new MarkerOptions().position(new LatLng(55.61015,12.9786)).title("Cykelpump Kockums Torg"));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.61015, 12.9786)).title("Cykelpump Kockums Torg"));
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.5877, 12.9887)).title("Cykelpump Malmö gamla stadion"));
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.6093, 12.9967)).title("Cykelpump, Anna Linds plats"));
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.6025, 12.9679)).title("Cykelpump, Ribersborgsstigen"));
 
-        mMap.addMarker(new MarkerOptions().position(new LatLng(55.6131,12.9767)).title("Turning Torso"));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.6131, 12.9767)).title("Turning Torso"));
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.6140, 12.9839)).title("Stapelbäddsparken, skatepark"));
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.6125, 12.9914)).title("Media Evolution City"));
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.6144, 12.9895)).title("Doc Piazza Trattoria"));
@@ -135,7 +135,7 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.6150, 12.9858)).title("Ubåtshallen"));
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.6108, 12.9949)).title("Orkanen, Malmö Högskola"));
 
-        mMap.addMarker(new MarkerOptions().position(new LatLng(55.5850,12.9873)).title("Swedbank Stadion"));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.5850, 12.9873)).title("Swedbank Stadion"));
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.5922, 12.9975)).title("Pildammsparken Entré"));
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.5901, 12.9887)).title("Pildammsparken Tallriken"));
 
@@ -232,6 +232,7 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
 
     /**
      * Updates my location to currentLocation, moves the camera and adds a marker for my location accordingly
+     *
      * @param location
      */
     private void handleNewLocation(Location location) {
@@ -256,8 +257,5 @@ public class MapsActivity extends FragmentActivity implements GoogleApiClient.Co
                 .build();
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
-
     }
-
-
 }
