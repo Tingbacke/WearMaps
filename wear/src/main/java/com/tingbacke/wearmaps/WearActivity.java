@@ -1,13 +1,22 @@
 package com.tingbacke.wearmaps;
 
 import android.app.Activity;
+import android.content.Context;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.support.wearable.view.WatchViewStub;
 import android.widget.TextView;
 
-public class WearActivity extends Activity {
+import com.google.android.gms.common.api.GoogleApiClient;
+
+public class WearActivity extends FragmentActivity {
 
     private TextView mTextView;
+    private GoogleApiClient mGoogleApiClient;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,4 +30,6 @@ public class WearActivity extends Activity {
             }
         });
     }
+
+
 }

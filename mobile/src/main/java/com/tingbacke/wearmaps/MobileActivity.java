@@ -107,6 +107,8 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         }
     }
 
+
+
     /**
      * This is where we can add markers or lines, add listeners or move the camera. In this case, we
      * just add a marker near Africa.
@@ -147,7 +149,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.6138, 12.9812)).title("Varvsparken"));
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.6137, 12.9725)).title("Daniabadet, Västra Hamnen"));
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.6171, 12.9744)).title("Scaniabadet, Västra Hamnen"));
-        //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.5967, 13.0053)).title("MALMÖ"));
         //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
         //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
         //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
