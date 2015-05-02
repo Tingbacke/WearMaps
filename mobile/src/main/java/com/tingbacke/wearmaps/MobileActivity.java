@@ -5,17 +5,30 @@ package com.tingbacke.wearmaps;
  * From tutorial: http://blog.teamtreehouse.com/beginners-guide-location-android
  */
 
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentSender;
+import android.content.SharedPreferences;
+import android.location.Address;
 import android.location.Criteria;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -28,9 +41,15 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
 
 public class MobileActivity extends FragmentActivity implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, LocationListener {
+        GoogleApiClient.OnConnectionFailedListener{
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private GoogleApiClient mGoogleApiClient;
@@ -42,6 +61,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mobile);
+
         setUpMapIfNeeded();
 
         UiSettings mapSettings;
@@ -59,7 +79,26 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 .setInterval(10 * 1000)        // 10 seconds, in milliseconds
                 .setFastestInterval(1 * 1000); // 1 second, in milliseconds
+    }
 
+    protected synchronized void buildGoogleApiClient() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mGoogleApiClient.disconnect();
     }
 
     @Override
@@ -67,15 +106,6 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         super.onResume();
         setUpMapIfNeeded();
         mGoogleApiClient.connect();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (mGoogleApiClient.isConnected()) {
-            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-            mGoogleApiClient.disconnect();
-        }
     }
 
     /**
@@ -107,8 +137,6 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         }
     }
 
-
-
     /**
      * This is where we can add markers or lines, add listeners or move the camera. In this case, we
      * just add a marker near Africa.
@@ -118,11 +146,10 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
     private void setUpMap() {
 
         mMap.setMyLocationEnabled(true);
-
         /**
          * https://geolocation.ws/map/55.588227,13.002735/13/en?types=&limit=300&licenses=
+         * Dammfrivägen 61 = 55.587116, 12.979788
          */
-
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.61015, 12.9786)).title("Cykelpump Kockums Torg"));
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.5877, 12.9887)).title("Cykelpump Malmö gamla stadion"));
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.6093, 12.9967)).title("Cykelpump, Anna Linds plats"));
@@ -150,7 +177,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.6137, 12.9725)).title("Daniabadet, Västra Hamnen"));
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.6171, 12.9744)).title("Scaniabadet, Västra Hamnen"));
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.5967, 13.0053)).title("MALMÖ"));
-        //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
+        mMap.addMarker(new MarkerOptions().position(new LatLng(55.5986, 12.9836)).title("Kronprinsen"));
         //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
         //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
         //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
@@ -185,7 +212,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
 
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(latLng)
-                .zoom(15)
+                .zoom(17)
                 .bearing(0)
                 .tilt(25)
                 .build();
@@ -194,11 +221,6 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         LatLng myCoordinates = new LatLng(latitude, longitude);
         CameraUpdate yourLocation = CameraUpdateFactory.newLatLngZoom(myCoordinates, 15);
         mMap.animateCamera(yourLocation);
-
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
 
     }
 
@@ -221,7 +243,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         Log.i(TAG, "Location services connected.");
         Location location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         if (location == null) {
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, (LocationListener) this);
         } else {
             handleNewLocation(location);
         }
@@ -253,11 +275,49 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
 
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(latLng)
-                .zoom(15)
+                .zoom(17)
                 .bearing(0)
                 .tilt(25)
                 .build();
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
+        TextView myLatitude = (TextView)findViewById(R.id.textView);
+        TextView myLongitude = (TextView)findViewById(R.id.textView2);
+        TextView myAddress = (TextView)findViewById(R.id.textView3);
+
+        myLatitude.setText("Latitude: " + String.valueOf(currentLatitude));
+        myLongitude.setText("Longitude: " + String.valueOf(currentLongitude));
+
+        Geocoder geocoder = new Geocoder(this, Locale.ENGLISH);
+
+
+        try {
+            List<Address> addresses = geocoder.getFromLocation(currentLatitude, currentLongitude, 1);
+
+            if(addresses != null) {
+                Address returnedAddress = addresses.get(0);
+                StringBuilder strReturnedAddress = new StringBuilder("Address:\n");
+                for(int i=0; i<returnedAddress.getMaxAddressLineIndex(); i++) {
+                    strReturnedAddress.append(returnedAddress.getAddressLine(i)).append("\n");
+                }
+                myAddress.setText(strReturnedAddress.toString());
+
+                //display in long period of time
+                Toast.makeText(MobileActivity.this, myAddress.getText().toString(),
+                        Toast.LENGTH_LONG).show();
+            }
+            else{
+                myAddress.setText("No Address returned!");
+            }
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            myAddress.setText("Cannot get Address!");
+        }
+
+
+
     }
+
+
 }
