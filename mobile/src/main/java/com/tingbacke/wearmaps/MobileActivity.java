@@ -302,7 +302,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
                 }
                 myAddress.setText(strReturnedAddress.toString());
 
-                //display in long period of time
+                // Added this Toast to display address ---> In order to find out where to call notification builder for wearable
                 Toast.makeText(MobileActivity.this, myAddress.getText().toString(),
                         Toast.LENGTH_LONG).show();
             }
