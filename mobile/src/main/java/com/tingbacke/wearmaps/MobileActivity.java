@@ -70,7 +70,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         setContentView(R.layout.activity_mobile);
 
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        showNotification(1, "basic", getBasicNotification("myStack"));
+        //showNotification(1, "basic", getBasicNotification("myStack"));
 
 
         setUpMapIfNeeded();
@@ -330,7 +330,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
                 // Added this Toast to display address ---> In order to find out where to call notification builder for wearable
                 Toast.makeText(MobileActivity.this, myAddress.getText().toString(),
                         Toast.LENGTH_LONG).show();
-
+                         showNotification(1, "basic", getBasicNotification("myStack"));
 
             }
             else{
@@ -355,8 +355,9 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
     }
 
     private Notification getBasicNotification(String stack) {
-        String title = "My notification";
-        String text = String.valueOf(R.id.textView3).toString();
+        String title = "Current place";
+        TextView tv = (TextView) findViewById(R.id.textView3);
+        String text = tv.getText().toString();
 
         // Här bestämmer jag vibrationsmönster
         long[] pattern = { 0, 100, 0 };
