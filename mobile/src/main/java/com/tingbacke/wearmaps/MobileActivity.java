@@ -3,8 +3,12 @@ package com.tingbacke.wearmaps;
 /**
  * Johan Tingbacke, 2015-04-19
  * From tutorial: http://blog.teamtreehouse.com/beginners-guide-location-android
+ *
+ * To add custom notifications: http://possiblemobile.com/2014/07/create-custom-ongoing-notification-android-wear/
  */
 
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -40,6 +44,7 @@ import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.wearable.Wearable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -56,11 +61,17 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
     public static final String TAG = MobileActivity.class.getSimpleName();
     private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
     private LocationRequest mLocationRequest;
+    NotificationManager notificationManager;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mobile);
+
+        notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        showNotification(1, "basic", getBasicNotification("myStack"));
+
 
         setUpMapIfNeeded();
 
@@ -69,6 +80,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         mapSettings.setZoomControlsEnabled(true);
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(Wearable.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
@@ -77,9 +89,11 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         // Create the LocationRequest object
         mLocationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                .setInterval(10 * 1000)        // 10 seconds, in milliseconds
+                .setInterval(5 * 1000)        // 5 seconds, in milliseconds
                 .setFastestInterval(1 * 1000); // 1 second, in milliseconds
     }
+
+
 
     protected synchronized void buildGoogleApiClient() {
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -106,6 +120,15 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         super.onResume();
         setUpMapIfNeeded();
         mGoogleApiClient.connect();
+    }
+
+    @Override
+    public void onDestroy() {
+        if (mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
+
+        super.onDestroy();
     }
 
     /**
@@ -266,10 +289,12 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         double currentLongitude = location.getLongitude();
         LatLng latLng = new LatLng(currentLatitude, currentLongitude);
 
+        /*
         MarkerOptions options = new MarkerOptions()
                 .position(latLng)
                 .title("I am here!");
         mMap.addMarker(options);
+        */
 
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
 
@@ -305,6 +330,8 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
                 // Added this Toast to display address ---> In order to find out where to call notification builder for wearable
                 Toast.makeText(MobileActivity.this, myAddress.getText().toString(),
                         Toast.LENGTH_LONG).show();
+
+
             }
             else{
                 myAddress.setText("No Address returned!");
@@ -314,10 +341,33 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
             e.printStackTrace();
             myAddress.setText("Cannot get Address!");
         }
-
-
-
     }
 
+    /**
+     * Show a notification.
+     *
+     * @param id           The notification id
+     * @param tag          The notification tag
+     * @param notification The notification
+     */
+    private void showNotification(int id, String tag, Notification notification) {
+        notificationManager.notify(tag, id, notification);
+    }
+
+    private Notification getBasicNotification(String stack) {
+        String title = "My notification";
+        String text = String.valueOf(R.id.textView3).toString();
+
+        // Här bestämmer jag vibrationsmönster
+        long[] pattern = { 0, 100, 0 };
+
+        return new Notification.Builder(this)
+                .setSmallIcon(R.mipmap.icon_mdpi)
+                .setContentTitle(title)
+                .setContentText(text)
+                //.setVibrate(pattern)
+                //.setGroup(stack)
+                .build();
+    }
 
 }
