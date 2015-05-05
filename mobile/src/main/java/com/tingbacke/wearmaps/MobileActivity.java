@@ -19,6 +19,7 @@ import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
+import android.provider.SyncStateContract;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -54,14 +55,34 @@ import java.util.Map;
 
 
 public class MobileActivity extends FragmentActivity implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener{
+        GoogleApiClient.OnConnectionFailedListener, ResultCallback<Status> {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private GoogleApiClient mGoogleApiClient;
     public static final String TAG = MobileActivity.class.getSimpleName();
     private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
     private LocationRequest mLocationRequest;
-    NotificationManager notificationManager;
+
+    public NotificationManager notificationManager;
+
+    protected static final String TAG2 = "creating-and-monitoring-geofences";
+
+    //The list of geofences
+    protected ArrayList<Geofence> mGeofenceList;
+
+    // check if geofences were added
+    private boolean mGeofencesAdded;
+
+    // used when requesting to add or remove geofences
+    private PendingIntent mGeofencePendingIntent;
+
+    // persist app state about whether geofences were added
+    private SharedPreferences mSharedPreferences;
+
+    // buttons for kicking of the process
+    private Button mAddGeofencesButton;
+    private Button mRemoveGeofencesButton;
+
 
 
     @Override
@@ -70,8 +91,39 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         setContentView(R.layout.activity_mobile);
 
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        //showNotification(1, "basic", getBasicNotification("myStack"));
 
+        // getting the UI widgets
+        mAddGeofencesButton = (Button) findViewById(R.id.add_geofences_button);
+        mRemoveGeofencesButton = (Button) findViewById(R.id.remove_geofences_button);
+
+        // I SET AN ONCLICKLISTENER TO THE ADDGEOFENCESBUTTON MYSELF...
+        mAddGeofencesButton.setOnClickListener(
+                new Button.OnClickListener() {
+                    public void onClick(View v) {
+                        // Get the geofences used. Geofence data is hard coded in this sample.
+
+                    }
+                }
+        );
+
+
+        // Empty list for storing geofences
+        mGeofenceList = new ArrayList<Geofence>();
+
+        // Initially set the PendingIntent used in addGeofences() and removeGeofences() to null.
+        mGeofencePendingIntent = null;
+
+        // Retrieve an instance of the SharedPreferences object
+        mSharedPreferences = getSharedPreferences(Constants.SHARED_PREFERENCES_NAME,
+                MODE_PRIVATE);
+
+        // Get the value of mGeofencesAdded from SharedPreferences. Set to false as a default.
+        mGeofencesAdded = mSharedPreferences.getBoolean(Constants.GEOFENCES_ADDED_KEY, false);
+
+        setButtonsEnabledState();
+
+        // MAYBE THIS SHOULD BE IN THE ONCLICKLISTENER ?
+        populateGeofenceList();
 
         setUpMapIfNeeded();
 
@@ -91,9 +143,9 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 .setInterval(5 * 1000)        // 5 seconds, in milliseconds
                 .setFastestInterval(1 * 1000); // 1 second, in milliseconds
+
+
     }
-
-
 
     protected synchronized void buildGoogleApiClient() {
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -122,13 +174,150 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         mGoogleApiClient.connect();
     }
 
+    // I want the GoogleApiClient to keep updating when the application is paused.
+    // in order for location updates to keep sending notifications to wearable
+    // even if the app is in the background. How to do?
     @Override
-    public void onDestroy() {
-        if (mGoogleApiClient.isConnected()) {
-            mGoogleApiClient.disconnect();
+    protected void onPause() {
+        super.onPause();
+        mGoogleApiClient.isConnected();
+
+    }
+
+    private GeofencingRequest getGeofencingRequest() {
+        GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
+
+        // The INITIAL_TRIGGER_ENTER flag indicates that geofencing service should trigger a
+        // GEOFENCE_TRANSITION_ENTER notification when the geofence is added and if the device
+        // is already inside that geofence.
+        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
+
+        // Add the geofences to be monitored by geofencing service.
+        builder.addGeofences(mGeofenceList);
+
+        // Return a GeofencingRequest.
+        return builder.build();
+    }
+
+
+    public void addGeofencesButtonHandler(View v) {
+        if (!mGoogleApiClient.isConnected()) {
+            Toast.makeText(this, getString(R.string.not_connected), Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        super.onDestroy();
+        try {
+            LocationServices.GeofencingApi.addGeofences(
+                    mGoogleApiClient,
+                    // The GeofenceRequest object.
+                    getGeofencingRequest(),
+                    // A pending intent that that is reused when calling removeGeofences(). This
+                    // pending intent is used to generate an intent when a matched geofence
+                    // transition is observed.
+                    getGeofencePendingIntent()
+            ).setResultCallback(this); // Result processed in onResult().
+        } catch (SecurityException securityException) {
+            // Catch exception generated if the app does not use ACCESS_FINE_LOCATION permission.
+            logSecurityException(securityException);
+        }
+    }
+
+    public void removeGeofencesButtonHandler(View view) {
+        if (!mGoogleApiClient.isConnected()) {
+            Toast.makeText(this, getString(R.string.not_connected), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        try {
+            // Remove geofences.
+            LocationServices.GeofencingApi.removeGeofences(
+                    mGoogleApiClient,
+                    // This is the same pending intent that was used in addGeofences().
+                    getGeofencePendingIntent()
+            ).setResultCallback(this); // Result processed in onResult().
+        } catch (SecurityException securityException) {
+            // Catch exception generated if the app does not use ACCESS_FINE_LOCATION permission.
+            logSecurityException(securityException);
+        }
+    }
+
+    private void logSecurityException(SecurityException securityException) {
+        Log.e(TAG2,"", securityException);
+    }
+
+    public void onResult(Status status) {
+        if (status.isSuccess()) {
+            // Update state and save in shared preferences.
+            mGeofencesAdded = !mGeofencesAdded;
+            SharedPreferences.Editor editor = mSharedPreferences.edit();
+            editor.putBoolean(Constants.GEOFENCES_ADDED_KEY, mGeofencesAdded);
+            editor.commit();
+
+            // Update the UI. Adding geofences enables the Remove Geofences button, and removing
+            // geofences enables the Add Geofences button.
+            setButtonsEnabledState();
+
+            Toast.makeText(
+                    this,
+                    getString(mGeofencesAdded ? R.string.geofences_added :
+                            R.string.geofences_removed),
+                    Toast.LENGTH_SHORT
+            ).show();
+        } else {
+            // Get the status code for the error and log it using a user-friendly message.
+            String errorMessage = GeofenceErrorMessages.getErrorString(this,
+                    status.getStatusCode());
+            Log.e(TAG, errorMessage);
+        }
+    }
+
+    private PendingIntent getGeofencePendingIntent() {
+        // Reuse the PendingIntent if we already have it.
+        if (mGeofencePendingIntent != null) {
+            return mGeofencePendingIntent;
+        }
+        Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
+        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when calling
+        // addGeofences() and removeGeofences().
+        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    public void populateGeofenceList() {
+        for (Map.Entry<String, LatLng> entry : Constants.MALMO_LANDMARKS.entrySet()) {
+
+            mGeofenceList.add(new Geofence.Builder()
+                    // Set the request ID of the geofence. This is a string to identify this
+                    // geofence.
+                    .setRequestId(entry.getKey())
+
+                            // Set the circular region of this geofence.
+                    .setCircularRegion(
+                            entry.getValue().latitude,
+                            entry.getValue().longitude,
+                            Constants.GEOFENCE_RADIUS_IN_METERS
+                    )
+
+                            // Set the expiration duration of the geofence. This geofence gets automatically
+                            // removed after this period of time.
+                    .setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
+
+                            // Set the transition types of interest. Alerts are only generated for these
+                            // transition. We track entry and exit transitions in this sample.
+                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
+                            Geofence.GEOFENCE_TRANSITION_EXIT)
+
+                            // Create the geofence.
+                    .build());
+        }
+    }
+
+    private void setButtonsEnabledState() {
+        if (mGeofencesAdded) {
+            mAddGeofencesButton.setEnabled(false);
+            mRemoveGeofencesButton.setEnabled(true);
+        } else {
+            mAddGeofencesButton.setEnabled(true);
+            mRemoveGeofencesButton.setEnabled(false);
+        }
     }
 
     /**
@@ -235,7 +424,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
 
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(latLng)
-                .zoom(17)
+                .zoom(18)
                 .bearing(0)
                 .tilt(25)
                 .build();
@@ -245,6 +434,72 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         CameraUpdate yourLocation = CameraUpdateFactory.newLatLngZoom(myCoordinates, 15);
         mMap.animateCamera(yourLocation);
 
+    }
+
+    /**
+     * Updates my location to currentLocation, moves the camera and adds a marker for my location accordingly
+     *
+     * @param location
+     */
+    private void handleNewLocation(Location location) {
+        Log.d(TAG, location.toString());
+
+        //changed variable from currentLatitude/Longitude to latitude/longitude
+        double latitude = location.getLatitude();
+        double longitude = location.getLongitude();
+        LatLng latLng = new LatLng(latitude, longitude);
+/**
+ *         MarkerOptions options = new MarkerOptions()
+ *          .position(latLng)
+ *          .title("I am here!");
+ *          mMap.addMarker(options);
+ */
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+
+        CameraPosition cameraPosition = new CameraPosition.Builder()
+                .target(latLng)
+                .zoom(18)
+                .bearing(0)
+                .tilt(25)
+                .build();
+        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+
+        TextView myLatitude = (TextView) findViewById(R.id.textView);
+        TextView myLongitude = (TextView) findViewById(R.id.textView2);
+        TextView myAddress = (TextView) findViewById(R.id.textView3);
+
+        myLatitude.setText("Latitude: " + String.valueOf(latitude));
+        myLongitude.setText("Longitude: " + String.valueOf(longitude));
+
+        Geocoder geocoder = new Geocoder(this, Locale.ENGLISH);
+
+
+        try {
+            List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
+
+            if (addresses != null) {
+                Address returnedAddress = addresses.get(0);
+                StringBuilder strReturnedAddress = new StringBuilder("");
+                for (int i = 0; i < returnedAddress.getMaxAddressLineIndex(); i++) {
+                    strReturnedAddress.append(returnedAddress.getAddressLine(i)).append("\n");
+                }
+                myAddress.setText(strReturnedAddress.toString());
+/*
+                // Added this Toast to display address ---> In order to find out where to call notification builder for wearable
+                Toast.makeText(MobileActivity.this, myAddress.getText().toString(),
+                        Toast.LENGTH_LONG).show();
+*/
+                //Here is where I call the notification builder for the wearable
+                showNotification(1, "basic", getBasicNotification("myStack"));
+
+            } else {
+                myAddress.setText("No Address returned!");
+            }
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            myAddress.setText("Cannot get Address!");
+        }
     }
 
     @Override
@@ -275,72 +530,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
     @Override
     public void onConnectionSuspended(int i) {
         Log.i(TAG, "Location services suspended. Please reconnect.");
-    }
 
-    /**
-     * Updates my location to currentLocation, moves the camera and adds a marker for my location accordingly
-     *
-     * @param location
-     */
-    private void handleNewLocation(Location location) {
-        Log.d(TAG, location.toString());
-
-        double currentLatitude = location.getLatitude();
-        double currentLongitude = location.getLongitude();
-        LatLng latLng = new LatLng(currentLatitude, currentLongitude);
-
-        /*
-        MarkerOptions options = new MarkerOptions()
-                .position(latLng)
-                .title("I am here!");
-        mMap.addMarker(options);
-        */
-
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-
-        CameraPosition cameraPosition = new CameraPosition.Builder()
-                .target(latLng)
-                .zoom(17)
-                .bearing(0)
-                .tilt(25)
-                .build();
-        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-
-        TextView myLatitude = (TextView)findViewById(R.id.textView);
-        TextView myLongitude = (TextView)findViewById(R.id.textView2);
-        TextView myAddress = (TextView)findViewById(R.id.textView3);
-
-        myLatitude.setText("Latitude: " + String.valueOf(currentLatitude));
-        myLongitude.setText("Longitude: " + String.valueOf(currentLongitude));
-
-        Geocoder geocoder = new Geocoder(this, Locale.ENGLISH);
-
-
-        try {
-            List<Address> addresses = geocoder.getFromLocation(currentLatitude, currentLongitude, 1);
-
-            if(addresses != null) {
-                Address returnedAddress = addresses.get(0);
-                StringBuilder strReturnedAddress = new StringBuilder("Address:\n");
-                for(int i=0; i<returnedAddress.getMaxAddressLineIndex(); i++) {
-                    strReturnedAddress.append(returnedAddress.getAddressLine(i)).append("\n");
-                }
-                myAddress.setText(strReturnedAddress.toString());
-
-                // Added this Toast to display address ---> In order to find out where to call notification builder for wearable
-                Toast.makeText(MobileActivity.this, myAddress.getText().toString(),
-                        Toast.LENGTH_LONG).show();
-                         showNotification(1, "basic", getBasicNotification("myStack"));
-
-            }
-            else{
-                myAddress.setText("No Address returned!");
-            }
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            myAddress.setText("Cannot get Address!");
-        }
     }
 
     /**
@@ -355,19 +545,19 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
     }
 
     private Notification getBasicNotification(String stack) {
-        String title = "Current place";
+        String title = "Current place:";
         TextView tv = (TextView) findViewById(R.id.textView3);
         String text = tv.getText().toString();
 
-        // Här bestämmer jag vibrationsmönster
-        long[] pattern = { 0, 100, 0 };
+        // Här bestämmer jag vibrationsmönster för smartphonen
+        long[] pattern = {0, 50, 0};
 
         return new Notification.Builder(this)
                 .setSmallIcon(R.mipmap.icon_mdpi)
                 .setContentTitle(title)
                 .setContentText(text)
-                //.setVibrate(pattern)
-                //.setGroup(stack)
+                .setVibrate(pattern)
+                        //.setGroup(stack)
                 .build();
     }
 

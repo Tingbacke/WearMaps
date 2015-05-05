@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 android:orientation="vertical"
 android:layout_width="fill_parent"
 android:layout_height="fill_parent"
@@ -10,35 +10,80 @@ android:layout_height="fill_parent"
     android:layout_height="wrap_content"
     android:text="Location"
     android:background="#505050"
-    />
-<TextView
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="0dp"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="0dp" />
+
+    <TextView
     android:id="@+id/textView"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    />
-<TextView
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="0dp"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="33dp" />
+
+    <TextView
     android:id="@+id/textView2"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    />
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="0dp"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="66dp" />
 <TextView
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:text="Address"
     android:background="#505050"
-    />
+    android:layout_alignParentLeft="true"
+    android:layout_marginLeft="0dp"
+    android:layout_alignParentTop="true"
+    android:layout_marginTop="99dp"
+    android:id="@+id/textView4" />
 <TextView
     android:id="@+id/textView3"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    />
+    android:layout_alignParentLeft="true"
+    android:layout_marginLeft="0dp"
+    android:layout_alignParentTop="true"
+    android:layout_marginTop="132dp" />
 
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="404dp"
         tools:context=".MapsActivity"
-        tools:layout="@layout/abc_action_bar_title_item" />
-</LinearLayout>
+        tools:layout="@layout/abc_action_bar_title_item"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="0dp"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="165dp" />
+
+    <Button
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:text="R"
+        android:id="@+id/remove_geofences_button"
+        android:layout_gravity="right"
+        android:layout_marginLeft="60dp"
+        android:layout_marginEnd="49dp"
+        android:layout_alignTop="@+id/add_geofences_button"
+        android:layout_alignEnd="@+id/add_geofences_button" />
+
+    <Button
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:text="A"
+        android:id="@+id/add_geofences_button"
+        android:layout_gravity="center"
+        android:layout_marginLeft="60dp"
+        android:layout_below="@+id/textView4"
+        android:layout_alignParentEnd="true" />
+
+
+</RelativeLayout>
