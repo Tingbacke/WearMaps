@@ -22,34 +22,31 @@ android:layout_height="fill_parent"
         android:layout_alignParentLeft="true"
         android:layout_marginLeft="0dp"
         android:layout_alignParentTop="true"
-        android:layout_marginTop="33dp" />
+        android:layout_marginTop="20dp" />
 
     <TextView
     android:id="@+id/textView2"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
         android:layout_marginLeft="0dp"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="66dp" />
+        android:layout_below="@+id/textView"
+        android:layout_alignParentStart="true" />
 <TextView
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
     android:text="Address"
     android:background="#505050"
-    android:layout_alignParentLeft="true"
     android:layout_marginLeft="0dp"
-    android:layout_alignParentTop="true"
-    android:layout_marginTop="99dp"
-    android:id="@+id/textView4" />
+    android:id="@+id/textView4"
+    android:layout_below="@+id/textView2"
+    android:layout_alignParentStart="true" />
 <TextView
     android:id="@+id/textView3"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:layout_alignParentLeft="true"
     android:layout_marginLeft="0dp"
-    android:layout_alignParentTop="true"
-    android:layout_marginTop="132dp" />
+    android:layout_below="@+id/textView4"
+    android:layout_alignParentStart="true" />
 
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
@@ -61,29 +58,16 @@ android:layout_height="fill_parent"
         tools:layout="@layout/abc_action_bar_title_item"
         android:layout_alignParentLeft="true"
         android:layout_marginLeft="0dp"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="165dp" />
+        android:layout_below="@+id/textView3"
+        android:layout_alignParentBottom="true" />
+    <!--     android:layout_above="@+id/mycompassview"
 
-    <Button
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:text="R"
-        android:id="@+id/remove_geofences_button"
-        android:layout_gravity="right"
-        android:layout_marginLeft="60dp"
-        android:layout_marginEnd="49dp"
-        android:layout_alignTop="@+id/add_geofences_button"
-        android:layout_alignEnd="@+id/add_geofences_button" />
-
-    <Button
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:text="A"
-        android:id="@+id/add_geofences_button"
-        android:layout_gravity="center"
-        android:layout_marginLeft="60dp"
-        android:layout_below="@+id/textView4"
-        android:layout_alignParentEnd="true" />
-
-
+     <view
+         class="com.tingbacke.wearmaps.MyCompassView"
+         android:id="@+id/mycompassview"
+         android:layout_width="25dp"
+         android:layout_height="25dp"
+         android:layout_alignParentBottom="true"
+         android:layout_centerHorizontal="true" />
+ -->
 </RelativeLayout>

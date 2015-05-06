@@ -14,6 +14,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
@@ -43,6 +48,8 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.wearable.Wearable;
@@ -55,81 +62,38 @@ import java.util.Map;
 
 
 public class MobileActivity extends FragmentActivity implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, ResultCallback<Status> {
+        GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMapLongClickListener {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private GoogleApiClient mGoogleApiClient;
     public static final String TAG = MobileActivity.class.getSimpleName();
     private final static int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
     private LocationRequest mLocationRequest;
-
     public NotificationManager notificationManager;
 
-    protected static final String TAG2 = "creating-and-monitoring-geofences";
+    private static SensorManager mySensorManager;
+    private boolean sersorrunning;
+    private MyCompassView myCompassView;
 
-    //The list of geofences
-    protected ArrayList<Geofence> mGeofenceList;
-
-    // check if geofences were added
-    private boolean mGeofencesAdded;
-
-    // used when requesting to add or remove geofences
-    private PendingIntent mGeofencePendingIntent;
-
-    // persist app state about whether geofences were added
-    private SharedPreferences mSharedPreferences;
-
-    // buttons for kicking of the process
-    private Button mAddGeofencesButton;
-    private Button mRemoveGeofencesButton;
-
-
+    Circle myCircle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mobile);
 
+        /*
+        myCompassView = (MyCompassView)findViewById(R.id.mycompassview);
+        mySensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
+        List<Sensor> mySensors = mySensorManager.getSensorList(Sensor.TYPE_ORIENTATION);
+*/
         notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-        // getting the UI widgets
-        mAddGeofencesButton = (Button) findViewById(R.id.add_geofences_button);
-        mRemoveGeofencesButton = (Button) findViewById(R.id.remove_geofences_button);
-
-        // I SET AN ONCLICKLISTENER TO THE ADDGEOFENCESBUTTON MYSELF...
-        mAddGeofencesButton.setOnClickListener(
-                new Button.OnClickListener() {
-                    public void onClick(View v) {
-                        // Get the geofences used. Geofence data is hard coded in this sample.
-
-                    }
-                }
-        );
-
-
-        // Empty list for storing geofences
-        mGeofenceList = new ArrayList<Geofence>();
-
-        // Initially set the PendingIntent used in addGeofences() and removeGeofences() to null.
-        mGeofencePendingIntent = null;
-
-        // Retrieve an instance of the SharedPreferences object
-        mSharedPreferences = getSharedPreferences(Constants.SHARED_PREFERENCES_NAME,
-                MODE_PRIVATE);
-
-        // Get the value of mGeofencesAdded from SharedPreferences. Set to false as a default.
-        mGeofencesAdded = mSharedPreferences.getBoolean(Constants.GEOFENCES_ADDED_KEY, false);
-
-        setButtonsEnabledState();
-
-        // MAYBE THIS SHOULD BE IN THE ONCLICKLISTENER ?
-        populateGeofenceList();
-
         setUpMapIfNeeded();
 
         UiSettings mapSettings;
         mapSettings = mMap.getUiSettings();
         mapSettings.setZoomControlsEnabled(true);
+        mapSettings.setCompassEnabled(true);
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
@@ -142,17 +106,46 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         mLocationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 .setInterval(5 * 1000)        // 5 seconds, in milliseconds
-                .setFastestInterval(1 * 1000); // 1 second, in milliseconds
+                .setFastestInterval(1000); // 1 second, in milliseconds
 
+/*
+        if(mySensors.size() > 0){
+            mySensorManager.registerListener(mySensorEventListener, mySensors.get(0), SensorManager.SENSOR_DELAY_NORMAL);
+            sersorrunning = true;
+            Toast.makeText(this, "Start ORIENTATION Sensor", Toast.LENGTH_LONG).show();
 
+        }
+        else{
+            Toast.makeText(this, "No ORIENTATION Sensor", Toast.LENGTH_LONG).show();
+            sersorrunning = false;
+            finish();
+        }
+        */
     }
 
-    protected synchronized void buildGoogleApiClient() {
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .addApi(LocationServices.API)
-                .build();
+    private SensorEventListener mySensorEventListener = new SensorEventListener(){
+
+        @Override
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+            // TODO Auto-generated method stub
+
+        }
+
+        @Override
+        public void onSensorChanged(SensorEvent event) {
+            // TODO Auto-generated method stub
+            myCompassView.updateDirection((float)event.values[0]);
+        }
+    };
+
+    @Override
+    protected void onDestroy() {
+// TODO Auto-generated method stub
+        super.onDestroy();
+
+        if (sersorrunning) {
+            mySensorManager.unregisterListener(mySensorEventListener);
+        }
     }
 
     @Override
@@ -184,142 +177,6 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
 
     }
 
-    private GeofencingRequest getGeofencingRequest() {
-        GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
-
-        // The INITIAL_TRIGGER_ENTER flag indicates that geofencing service should trigger a
-        // GEOFENCE_TRANSITION_ENTER notification when the geofence is added and if the device
-        // is already inside that geofence.
-        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
-
-        // Add the geofences to be monitored by geofencing service.
-        builder.addGeofences(mGeofenceList);
-
-        // Return a GeofencingRequest.
-        return builder.build();
-    }
-
-
-    public void addGeofencesButtonHandler(View v) {
-        if (!mGoogleApiClient.isConnected()) {
-            Toast.makeText(this, getString(R.string.not_connected), Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        try {
-            LocationServices.GeofencingApi.addGeofences(
-                    mGoogleApiClient,
-                    // The GeofenceRequest object.
-                    getGeofencingRequest(),
-                    // A pending intent that that is reused when calling removeGeofences(). This
-                    // pending intent is used to generate an intent when a matched geofence
-                    // transition is observed.
-                    getGeofencePendingIntent()
-            ).setResultCallback(this); // Result processed in onResult().
-        } catch (SecurityException securityException) {
-            // Catch exception generated if the app does not use ACCESS_FINE_LOCATION permission.
-            logSecurityException(securityException);
-        }
-    }
-
-    public void removeGeofencesButtonHandler(View view) {
-        if (!mGoogleApiClient.isConnected()) {
-            Toast.makeText(this, getString(R.string.not_connected), Toast.LENGTH_SHORT).show();
-            return;
-        }
-        try {
-            // Remove geofences.
-            LocationServices.GeofencingApi.removeGeofences(
-                    mGoogleApiClient,
-                    // This is the same pending intent that was used in addGeofences().
-                    getGeofencePendingIntent()
-            ).setResultCallback(this); // Result processed in onResult().
-        } catch (SecurityException securityException) {
-            // Catch exception generated if the app does not use ACCESS_FINE_LOCATION permission.
-            logSecurityException(securityException);
-        }
-    }
-
-    private void logSecurityException(SecurityException securityException) {
-        Log.e(TAG2,"", securityException);
-    }
-
-    public void onResult(Status status) {
-        if (status.isSuccess()) {
-            // Update state and save in shared preferences.
-            mGeofencesAdded = !mGeofencesAdded;
-            SharedPreferences.Editor editor = mSharedPreferences.edit();
-            editor.putBoolean(Constants.GEOFENCES_ADDED_KEY, mGeofencesAdded);
-            editor.commit();
-
-            // Update the UI. Adding geofences enables the Remove Geofences button, and removing
-            // geofences enables the Add Geofences button.
-            setButtonsEnabledState();
-
-            Toast.makeText(
-                    this,
-                    getString(mGeofencesAdded ? R.string.geofences_added :
-                            R.string.geofences_removed),
-                    Toast.LENGTH_SHORT
-            ).show();
-        } else {
-            // Get the status code for the error and log it using a user-friendly message.
-            String errorMessage = GeofenceErrorMessages.getErrorString(this,
-                    status.getStatusCode());
-            Log.e(TAG, errorMessage);
-        }
-    }
-
-    private PendingIntent getGeofencePendingIntent() {
-        // Reuse the PendingIntent if we already have it.
-        if (mGeofencePendingIntent != null) {
-            return mGeofencePendingIntent;
-        }
-        Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
-        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when calling
-        // addGeofences() and removeGeofences().
-        return PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-    }
-
-    public void populateGeofenceList() {
-        for (Map.Entry<String, LatLng> entry : Constants.MALMO_LANDMARKS.entrySet()) {
-
-            mGeofenceList.add(new Geofence.Builder()
-                    // Set the request ID of the geofence. This is a string to identify this
-                    // geofence.
-                    .setRequestId(entry.getKey())
-
-                            // Set the circular region of this geofence.
-                    .setCircularRegion(
-                            entry.getValue().latitude,
-                            entry.getValue().longitude,
-                            Constants.GEOFENCE_RADIUS_IN_METERS
-                    )
-
-                            // Set the expiration duration of the geofence. This geofence gets automatically
-                            // removed after this period of time.
-                    .setExpirationDuration(Constants.GEOFENCE_EXPIRATION_IN_MILLISECONDS)
-
-                            // Set the transition types of interest. Alerts are only generated for these
-                            // transition. We track entry and exit transitions in this sample.
-                    .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
-                            Geofence.GEOFENCE_TRANSITION_EXIT)
-
-                            // Create the geofence.
-                    .build());
-        }
-    }
-
-    private void setButtonsEnabledState() {
-        if (mGeofencesAdded) {
-            mAddGeofencesButton.setEnabled(false);
-            mRemoveGeofencesButton.setEnabled(true);
-        } else {
-            mAddGeofencesButton.setEnabled(true);
-            mRemoveGeofencesButton.setEnabled(false);
-        }
-    }
-
     /**
      * Sets up the map if it is possible to do so (i.e., the Google Play services APK is correctly
      * installed) and the map has not already been instantiated.. This will ensure that we only ever
@@ -344,9 +201,10 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
             // Check if we were successful in obtaining the map.
             if (mMap != null) {
                 setUpMap();
-
             }
         }
+        //mMap.setOnMapClickListener(this);
+        mMap.setOnMapLongClickListener(this);
     }
 
     /**
@@ -397,6 +255,9 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
 
 
         mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+        //mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        //mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+        //mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
 
         // Get LocationManager object from System Service LOCATION_SERVICE
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -443,6 +304,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
      */
     private void handleNewLocation(Location location) {
         Log.d(TAG, location.toString());
+
 
         //changed variable from currentLatitude/Longitude to latitude/longitude
         double latitude = location.getLatitude();
@@ -550,7 +412,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         String text = tv.getText().toString();
 
         // Här bestämmer jag vibrationsmönster för smartphonen
-        long[] pattern = {0, 50, 0};
+        long[] pattern = {0, 100, 0};
 
         return new Notification.Builder(this)
                 .setSmallIcon(R.mipmap.icon_mdpi)
@@ -560,5 +422,30 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
                         //.setGroup(stack)
                 .build();
     }
+/*
+    @Override
+    public void onMapClick(LatLng point) {
+        CircleOptions circleOptions = new CircleOptions()
+                .center(point)   //set center
+                .radius(100)   //set radius in meters
+                .fillColor(Color.TRANSPARENT)  //default
+                .strokeColor(Color.BLUE)
+                .strokeWidth(5);
 
+        myCircle = mMap.addCircle(circleOptions);
+    }
+    */
+
+    @Override
+    public void onMapLongClick(LatLng point) {
+        CircleOptions circleOptions = new CircleOptions()
+                .center(point)   //set center
+                .radius(100)   //set radius in meters
+                .fillColor(0x40ff0000)  //semi-transparent
+                .strokeColor(Color.BLUE)
+                .strokeWidth(5);
+
+        myCircle = mMap.addCircle(circleOptions);
+
+    }
 }
