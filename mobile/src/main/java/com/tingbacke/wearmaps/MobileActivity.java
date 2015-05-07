@@ -3,7 +3,7 @@ package com.tingbacke.wearmaps;
 /**
  * Johan Tingbacke, 2015-04-19
  * From tutorial: http://blog.teamtreehouse.com/beginners-guide-location-android
- *
+ * <p/>
  * To add custom notifications: http://possiblemobile.com/2014/07/create-custom-ongoing-notification-android-wear/
  */
 
@@ -24,6 +24,7 @@ import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
+import android.os.Handler;
 import android.provider.SyncStateContract;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -62,7 +63,7 @@ import java.util.Map;
 
 
 public class MobileActivity extends FragmentActivity implements GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener, GoogleMap.OnMapLongClickListener {
+        GoogleApiClient.OnConnectionFailedListener {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private GoogleApiClient mGoogleApiClient;
@@ -71,10 +72,6 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
     private LocationRequest mLocationRequest;
     public NotificationManager notificationManager;
 
-    private static SensorManager mySensorManager;
-    private boolean sersorrunning;
-    private MyCompassView myCompassView;
-
     Circle myCircle;
 
     @Override
@@ -82,18 +79,13 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mobile);
 
-        /*
-        myCompassView = (MyCompassView)findViewById(R.id.mycompassview);
-        mySensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
-        List<Sensor> mySensors = mySensorManager.getSensorList(Sensor.TYPE_ORIENTATION);
-*/
-        notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         setUpMapIfNeeded();
-
         UiSettings mapSettings;
         mapSettings = mMap.getUiSettings();
         mapSettings.setZoomControlsEnabled(true);
         mapSettings.setCompassEnabled(true);
+
+        notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
@@ -105,47 +97,15 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         // Create the LocationRequest object
         mLocationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                .setInterval(5 * 1000)        // 5 seconds, in milliseconds
+                .setInterval(5000)        // 5 seconds, in milliseconds
                 .setFastestInterval(1000); // 1 second, in milliseconds
 
-/*
-        if(mySensors.size() > 0){
-            mySensorManager.registerListener(mySensorEventListener, mySensors.get(0), SensorManager.SENSOR_DELAY_NORMAL);
-            sersorrunning = true;
-            Toast.makeText(this, "Start ORIENTATION Sensor", Toast.LENGTH_LONG).show();
-
-        }
-        else{
-            Toast.makeText(this, "No ORIENTATION Sensor", Toast.LENGTH_LONG).show();
-            sersorrunning = false;
-            finish();
-        }
-        */
     }
-
-    private SensorEventListener mySensorEventListener = new SensorEventListener(){
-
-        @Override
-        public void onAccuracyChanged(Sensor sensor, int accuracy) {
-            // TODO Auto-generated method stub
-
-        }
-
-        @Override
-        public void onSensorChanged(SensorEvent event) {
-            // TODO Auto-generated method stub
-            myCompassView.updateDirection((float)event.values[0]);
-        }
-    };
 
     @Override
     protected void onDestroy() {
-// TODO Auto-generated method stub
         super.onDestroy();
-
-        if (sersorrunning) {
-            mySensorManager.unregisterListener(mySensorEventListener);
-        }
+        mGoogleApiClient.disconnect();
     }
 
     @Override
@@ -167,14 +127,11 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         mGoogleApiClient.connect();
     }
 
-    // I want the GoogleApiClient to keep updating when the application is paused.
-    // in order for location updates to keep sending notifications to wearable
-    // even if the app is in the background. How to do?
     @Override
     protected void onPause() {
         super.onPause();
+        setUpMapIfNeeded();
         mGoogleApiClient.isConnected();
-
     }
 
     /**
@@ -203,8 +160,6 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
                 setUpMap();
             }
         }
-        //mMap.setOnMapClickListener(this);
-        mMap.setOnMapLongClickListener(this);
     }
 
     /**
@@ -215,6 +170,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
      */
     private void setUpMap() {
 
+        mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
         mMap.setMyLocationEnabled(true);
         /**
          * https://geolocation.ws/map/55.588227,13.002735/13/en?types=&limit=300&licenses=
@@ -252,12 +208,6 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
         //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
         //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
-
-
-        mMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-        //mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-        //mMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
-        //mMap.setMapType(GoogleMap.MAP_TYPE_TERRAIN);
 
         // Get LocationManager object from System Service LOCATION_SERVICE
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -298,7 +248,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
     }
 
     /**
-     * Updates my location to currentLocation, moves the camera and adds a marker for my location accordingly
+     * Updates my location to currentLocation, moves the camera.
      *
      * @param location
      */
@@ -310,12 +260,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         double latitude = location.getLatitude();
         double longitude = location.getLongitude();
         LatLng latLng = new LatLng(latitude, longitude);
-/**
- *         MarkerOptions options = new MarkerOptions()
- *          .position(latLng)
- *          .title("I am here!");
- *          mMap.addMarker(options);
- */
+
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
 
         CameraPosition cameraPosition = new CameraPosition.Builder()
@@ -334,7 +279,6 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         myLongitude.setText("Longitude: " + String.valueOf(longitude));
 
         Geocoder geocoder = new Geocoder(this, Locale.ENGLISH);
-
 
         try {
             List<Address> addresses = geocoder.getFromLocation(latitude, longitude, 1);
@@ -392,7 +336,6 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
     @Override
     public void onConnectionSuspended(int i) {
         Log.i(TAG, "Location services suspended. Please reconnect.");
-
     }
 
     /**
@@ -411,7 +354,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         TextView tv = (TextView) findViewById(R.id.textView3);
         String text = tv.getText().toString();
 
-        // Här bestämmer jag vibrationsmönster för smartphonen
+        // Här bestämmer jag vibrationsmönster för smartphonen - Samma notification går till wear
         long[] pattern = {0, 100, 0};
 
         return new Notification.Builder(this)
@@ -421,31 +364,5 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
                 .setVibrate(pattern)
                         //.setGroup(stack)
                 .build();
-    }
-/*
-    @Override
-    public void onMapClick(LatLng point) {
-        CircleOptions circleOptions = new CircleOptions()
-                .center(point)   //set center
-                .radius(100)   //set radius in meters
-                .fillColor(Color.TRANSPARENT)  //default
-                .strokeColor(Color.BLUE)
-                .strokeWidth(5);
-
-        myCircle = mMap.addCircle(circleOptions);
-    }
-    */
-
-    @Override
-    public void onMapLongClick(LatLng point) {
-        CircleOptions circleOptions = new CircleOptions()
-                .center(point)   //set center
-                .radius(100)   //set radius in meters
-                .fillColor(0x40ff0000)  //semi-transparent
-                .strokeColor(Color.BLUE)
-                .strokeWidth(5);
-
-        myCircle = mMap.addCircle(circleOptions);
-
     }
 }

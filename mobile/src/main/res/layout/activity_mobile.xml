@@ -60,14 +60,5 @@ android:layout_height="fill_parent"
         android:layout_marginLeft="0dp"
         android:layout_below="@+id/textView3"
         android:layout_alignParentBottom="true" />
-    <!--     android:layout_above="@+id/mycompassview"
 
-     <view
-         class="com.tingbacke.wearmaps.MyCompassView"
-         android:id="@+id/mycompassview"
-         android:layout_width="25dp"
-         android:layout_height="25dp"
-         android:layout_alignParentBottom="true"
-         android:layout_centerHorizontal="true" />
- -->
 </RelativeLayout>
