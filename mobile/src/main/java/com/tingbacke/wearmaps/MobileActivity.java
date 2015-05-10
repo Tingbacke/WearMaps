@@ -66,13 +66,16 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
     private LocationRequest mLocationRequest;
     public NotificationManager notificationManager;
 
-    private static final String GOOGLE_API_KEY = "AIzaSyAJqF-6jSqdpOUs1rlbM4HseKKeCGq1g0k";
     private Marker[] placeMarkers;
     private final int MAX_PLACES = 20;
     private MarkerOptions[] places;
 
     ArrayList<LatLng> markerPoints;
 
+    public float currDistance;
+    //Ok här är hårdkodade GPS för Ribersborgs kallbadhus
+    public double destLat = 55.6048;
+    public double destLong = 12.9658;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,6 +83,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         setContentView(R.layout.activity_mobile);
 
         setUpMapIfNeeded();
+
         UiSettings mapSettings;
         mapSettings = mMap.getUiSettings();
         mapSettings.setZoomControlsEnabled(true);
@@ -162,7 +166,9 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
                     .getMap();
             // Check if we were successful in obtaining the map.
             if (mMap != null) {
+
                 setUpMap();
+
                 placeMarkers = new Marker[MAX_PLACES];
                 // Setting onclick event listener for the map
                 mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
@@ -259,9 +265,6 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.5967, 13.0053)).title("MALMÖ"));
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.5986, 12.9836)).title("Kronprinsen"));
         //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
-        //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
-        //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
-        //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
 
         // Get LocationManager object from System Service LOCATION_SERVICE
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -296,7 +299,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 
         LatLng myCoordinates = new LatLng(latitude, longitude);
-        CameraUpdate yourLocation = CameraUpdateFactory.newLatLngZoom(myCoordinates, 15);
+        CameraUpdate yourLocation = CameraUpdateFactory.newLatLngZoom(myCoordinates, 18);
         mMap.animateCamera(yourLocation);
 
     }
@@ -331,6 +334,8 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         myLatitude.setText("Latitude: " + String.valueOf(latitude));
         myLongitude.setText("Longitude: " + String.valueOf(longitude));
 
+        currDistance = getDistance(latitude, longitude, destLat, destLong);
+
         Geocoder geocoder = new Geocoder(this, Locale.ENGLISH);
 
         try {
@@ -342,7 +347,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
                 for (int i = 0; i < returnedAddress.getMaxAddressLineIndex(); i++) {
                     strReturnedAddress.append(returnedAddress.getAddressLine(i)).append("\n");
                 }
-                myAddress.setText(strReturnedAddress.toString());
+                myAddress.setText(strReturnedAddress.toString()+ "Dest: " + Math.round(currDistance) + "m away");
 /*
                 // Added this Toast to display address ---> In order to find out where to call notification builder for wearable
                 Toast.makeText(MobileActivity.this, myAddress.getText().toString(),
@@ -433,8 +438,6 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
 
         // Sensor enabled
         String sensor = "sensor=false";
-
-        String distance = "distance";
 
         // Building the parameters to the web service
         String parameters = str_origin + "&" + str_dest + "&" + "&" + tr_mode + "&" + sensor;
@@ -582,24 +585,24 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         }
     }
 
-
-
-
-
-        //räknar ut i meter mellan long o latts från dig och något annat
+    // Calculating distance between your current position and destination
     public float getDistance(double lat1, double longi, double lat2,
                              double longi2) {
+
         float[] dist = new float[1];
+
         try {
             Location.distanceBetween(lat1, longi, lat2, longi2, dist);
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        Toast.makeText(getApplicationContext(), String.valueOf(dist[0]),
-                Toast.LENGTH_SHORT).show();
+
+        Toast.makeText(getApplicationContext(), String.valueOf(Math.round(dist[0])) + " meters away",
+                Toast.LENGTH_LONG).show();
         return dist[0];
     }
+
 
 
 }
