@@ -21,6 +21,7 @@ import android.os.AsyncTask;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -72,8 +73,9 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
 
     ArrayList<LatLng> markerPoints;
 
+    // Variable used for calculating current distance to destination
     public float currDistance;
-    //Ok här är hårdkodade GPS för Ribersborgs kallbadhus
+    // Hardcoded LatLng location for a destination. Ribersborgs Kallbadhus.
     public double destLat = 55.6048;
     public double destLong = 12.9658;
 
@@ -312,7 +314,6 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
     private void handleNewLocation(Location location) {
         Log.d(TAG, location.toString());
 
-        //changed variable from currentLatitude/Longitude to latitude/longitude
         double latitude = location.getLatitude();
         double longitude = location.getLongitude();
         LatLng latLng = new LatLng(latitude, longitude);
@@ -330,10 +331,12 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         TextView myLatitude = (TextView) findViewById(R.id.textView);
         TextView myLongitude = (TextView) findViewById(R.id.textView2);
         TextView myAddress = (TextView) findViewById(R.id.textView3);
+        ImageView myImage = (ImageView) findViewById(R.id.imageView);
 
         myLatitude.setText("Latitude: " + String.valueOf(latitude));
         myLongitude.setText("Longitude: " + String.valueOf(longitude));
 
+        // Instantiating currDistance to get distance to destination from my location
         currDistance = getDistance(latitude, longitude, destLat, destLong);
 
         Geocoder geocoder = new Geocoder(this, Locale.ENGLISH);
@@ -347,7 +350,43 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
                 for (int i = 0; i < returnedAddress.getMaxAddressLineIndex(); i++) {
                     strReturnedAddress.append(returnedAddress.getAddressLine(i)).append("\n");
                 }
-                myAddress.setText(strReturnedAddress.toString()+ "Dest: " + Math.round(currDistance) + "m away");
+                String fake = strReturnedAddress.toString();
+
+                if (fake.contains("Östra Varvsgatan")) {
+
+                    myAddress.setText("K3, Malmö Högskola");
+                    myImage.setImageResource(R.mipmap.kranen);
+
+
+                } else if (fake.contains("Västra Varvsgatan")) {
+
+                    myAddress.setText("Turning Torso");
+                    myImage.setImageResource(R.mipmap.turning);
+
+                } else if (fake.contains("Jungmansgatan")) {
+
+                    myAddress.setText("Kockum Fritid");
+                    myImage.setImageResource(R.mipmap.kockum);
+
+                }else if (fake.contains("Stapelbäddsgatan")){
+
+                    myAddress.setText("Stapelbäddsparken, skatepark");
+                    myImage.setImageResource(R.mipmap.stapel);
+
+                }else if (fake.contains("Stora Varvsgatan")){
+
+                    myAddress.setText("Media Evolution City");
+                    myImage.setImageResource(R.mipmap.media);
+
+                }else if (fake.contains("Masttorget")){
+
+                    myAddress.setText("Ica Maxi");
+                    myImage.setImageResource(R.mipmap.ica);
+
+                }
+
+
+                //myAddress.setText(strReturnedAddress.toString()+ "Dest: " + Math.round(currDistance) + "m away");
 /*
                 // Added this Toast to display address ---> In order to find out where to call notification builder for wearable
                 Toast.makeText(MobileActivity.this, myAddress.getText().toString(),
@@ -412,7 +451,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         TextView tv = (TextView) findViewById(R.id.textView3);
         String text = tv.getText().toString();
 
-        // Här bestämmer jag vibrationsmönster för smartphonen - Samma notification går till wear
+        // Here I determine the vibration pattern for the notification
         long[] pattern = {0, 100, 0};
 
         return new Notification.Builder(this)
@@ -585,7 +624,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         }
     }
 
-    // Calculating distance between your current position and destination
+    // Method for calculating distance between current position and destination
     public float getDistance(double lat1, double longi, double lat2,
                              double longi2) {
 
@@ -598,11 +637,11 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
             e.printStackTrace();
         }
 
+        // Making a toast of the returned value, rounding it using Math.round() to get an "int"
         Toast.makeText(getApplicationContext(), String.valueOf(Math.round(dist[0])) + " meters away",
                 Toast.LENGTH_LONG).show();
         return dist[0];
     }
-
 
 
 }
