@@ -394,6 +394,11 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
                     myAddress.setText("Ica Maxi 102m away"+ "\n" + "Dest: " + Math.round(currDistance) + "m away");
                     myImage.setImageResource(R.mipmap.ica);
 
+                }else if(fake.contains("Dammfrivägen")){
+
+                    myAddress.setText("Johan's crib" + "\n" + "Dest: " + Math.round(currDistance) + "m away");
+                    myImage.setImageResource(R.mipmap.damm);
+
                 }
                 //myAddress.setText(strReturnedAddress.toString()+ "Dest: " + Math.round(currDistance) + "m away");
 /*
@@ -459,14 +464,15 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         String title = "Current place:";
         TextView tv = (TextView) findViewById(R.id.textView3);
         String text = tv.getText().toString();
-        ImageView cp = (ImageView) findViewById(R.id.imageView);
-
 
         // Here I determine the vibration pattern for the notification
         long[] pattern = {0, 100, 0};
 
+        // Latest update 2015-05-11
+        // Changed to NotificationCompat
+        // Added .bigPicture();
         NotificationCompat.Style style = new NotificationCompat.BigPictureStyle()
-                .bigPicture(BitmapFactory.decodeResource(getResources(), R.mipmap.a));
+                .bigPicture(BitmapFactory.decodeResource(getResources(), R.id.imageView));
 
         return new NotificationCompat.Builder(this)
                 .setSmallIcon(R.mipmap.icon_mdpi)
