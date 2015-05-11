@@ -11,6 +11,8 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.IntentSender;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Address;
 import android.location.Criteria;
@@ -20,6 +22,7 @@ import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -27,6 +30,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -41,6 +45,10 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.wearable.Asset;
+import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.PutDataMapRequest;
+import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
 import org.json.JSONObject;
@@ -350,42 +358,43 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
                 for (int i = 0; i < returnedAddress.getMaxAddressLineIndex(); i++) {
                     strReturnedAddress.append(returnedAddress.getAddressLine(i)).append("\n");
                 }
+
+                // Hardcoded string which searches through strReturnedAddress for specifics
+                // if statements decide which information will be displayed
                 String fake = strReturnedAddress.toString();
 
                 if (fake.contains("Östra Varvsgatan")) {
 
-                    myAddress.setText("K3, Malmö Högskola");
+                    myAddress.setText("K3, Malmö Högskola 27m away"+ "\n" + "Dest: " + Math.round(currDistance) + "m away");
                     myImage.setImageResource(R.mipmap.kranen);
 
 
                 } else if (fake.contains("Västra Varvsgatan")) {
 
-                    myAddress.setText("Turning Torso");
+                    myAddress.setText("Turning Torso 38m away"+ "\n" + "Dest: " + Math.round(currDistance) + "m away");
                     myImage.setImageResource(R.mipmap.turning);
 
                 } else if (fake.contains("Jungmansgatan")) {
 
-                    myAddress.setText("Kockum Fritid");
+                    myAddress.setText("Kockum Fritid 41m away"+ "\n" + "Dest: " + Math.round(currDistance) + "m away");
                     myImage.setImageResource(R.mipmap.kockum);
 
                 }else if (fake.contains("Stapelbäddsgatan")){
 
-                    myAddress.setText("Stapelbäddsparken, skatepark");
+                    myAddress.setText("Stapelbäddsparken 52m away"+ "\n" + "Dest: " + Math.round(currDistance) + "m away");
                     myImage.setImageResource(R.mipmap.stapel);
 
                 }else if (fake.contains("Stora Varvsgatan")){
 
-                    myAddress.setText("Media Evolution City");
+                    myAddress.setText("Media Evolution City 19m away"+ "\n" + "Dest: " + Math.round(currDistance) + "m away");
                     myImage.setImageResource(R.mipmap.media);
 
                 }else if (fake.contains("Masttorget")){
 
-                    myAddress.setText("Ica Maxi");
+                    myAddress.setText("Ica Maxi 102m away"+ "\n" + "Dest: " + Math.round(currDistance) + "m away");
                     myImage.setImageResource(R.mipmap.ica);
 
                 }
-
-
                 //myAddress.setText(strReturnedAddress.toString()+ "Dest: " + Math.round(currDistance) + "m away");
 /*
                 // Added this Toast to display address ---> In order to find out where to call notification builder for wearable
@@ -450,18 +459,25 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         String title = "Current place:";
         TextView tv = (TextView) findViewById(R.id.textView3);
         String text = tv.getText().toString();
+        ImageView cp = (ImageView) findViewById(R.id.imageView);
+
 
         // Here I determine the vibration pattern for the notification
         long[] pattern = {0, 100, 0};
 
-        return new Notification.Builder(this)
+        NotificationCompat.Style style = new NotificationCompat.BigPictureStyle()
+                .bigPicture(BitmapFactory.decodeResource(getResources(), R.mipmap.a));
+
+        return new NotificationCompat.Builder(this)
                 .setSmallIcon(R.mipmap.icon_mdpi)
                 .setContentTitle(title)
                 .setContentText(text)
+                .setStyle(style)
                 .setVibrate(pattern)
-                        //.setGroup(stack)
+                .setGroup(stack)
                 .build();
     }
+
 
     private String getDirectionsUrl(LatLng origin, LatLng dest) {
 
