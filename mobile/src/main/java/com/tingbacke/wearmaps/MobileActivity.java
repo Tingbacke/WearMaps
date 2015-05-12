@@ -14,11 +14,13 @@ import android.content.IntentSender;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
+import android.media.Image;
 import android.os.AsyncTask;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -365,39 +367,44 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
 
                 if (fake.contains("Östra Varvsgatan")) {
 
-                    myAddress.setText("K3, Malmö Högskola 27m away"+ "\n" + "Dest: " + Math.round(currDistance) + "m away");
+                    myAddress.setText("K3, Malmö Högskola"+ "\n" + "\n" + "Dest: " + Math.round(currDistance) + "m away");
                     myImage.setImageResource(R.mipmap.kranen);
 
 
-                } else if (fake.contains("Västra Varvsgatan")) {
+                } else if (fake.contains("Lilla Varvsgatan")) {
 
-                    myAddress.setText("Turning Torso 38m away"+ "\n" + "Dest: " + Math.round(currDistance) + "m away");
+                    myAddress.setText("Turning Torso"+ "\n" + "\n" + "Dest: " + Math.round(currDistance) + "m away");
                     myImage.setImageResource(R.mipmap.turning);
 
-                } else if (fake.contains("Jungmansgatan")) {
+                } else if (fake.contains("Västra Varvsgatan")) {
 
-                    myAddress.setText("Kockum Fritid 41m away"+ "\n" + "Dest: " + Math.round(currDistance) + "m away");
+                    myAddress.setText("Kockum Fritid"+ "\n" + "\n" + "Dest: " + Math.round(currDistance) + "m away");
                     myImage.setImageResource(R.mipmap.kockum);
 
                 }else if (fake.contains("Stapelbäddsgatan")){
 
-                    myAddress.setText("Stapelbäddsparken 52m away"+ "\n" + "Dest: " + Math.round(currDistance) + "m away");
+                    myAddress.setText("Stapelbäddsparken"+ "\n" + "\n" + "Dest: " + Math.round(currDistance) + "m away");
                     myImage.setImageResource(R.mipmap.stapel);
 
                 }else if (fake.contains("Stora Varvsgatan")){
 
-                    myAddress.setText("Media Evolution City 19m away"+ "\n" + "Dest: " + Math.round(currDistance) + "m away");
+                    myAddress.setText("Media Evolution City"+ "\n" + "\n" + "Dest: " + Math.round(currDistance) + "m away");
                     myImage.setImageResource(R.mipmap.media);
 
                 }else if (fake.contains("Masttorget")){
 
-                    myAddress.setText("Ica Maxi 102m away"+ "\n" + "Dest: " + Math.round(currDistance) + "m away");
+                    myAddress.setText("Ica Maxi"+ "\n" + "\n" + "Dest: " + Math.round(currDistance) + "m away");
                     myImage.setImageResource(R.mipmap.ica);
 
-                }else if(fake.contains("Dammfrivägen")){
+                }else if (fake.contains("Dammfrivägen")){
 
-                    myAddress.setText("Johan's crib" + "\n" + "Dest: " + Math.round(currDistance) + "m away");
+                    myAddress.setText("Johan's crib" + "\n" + "\n" + "Dest: " + Math.round(currDistance) + "m away");
                     myImage.setImageResource(R.mipmap.damm);
+
+                }else if (fake.contains("Riggaregatan")){
+
+                    myAddress.setText("Scaniabadet" + "\n"  + "\n" + "Dest: " + Math.round(currDistance) + "m away");
+                    myImage.setImageResource(R.mipmap.scaniabadet);
 
                 }
                 //myAddress.setText(strReturnedAddress.toString()+ "Dest: " + Math.round(currDistance) + "m away");
@@ -417,6 +424,42 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
             e.printStackTrace();
             myAddress.setText("Cannot get Address!");
         }
+    }
+
+    /**
+     * Show a notification.
+     *
+     * @param id           The notification id
+     * @param tag          The notification tag
+     * @param notification The notification
+     */
+    private void showNotification(int id, String tag, Notification notification) {
+        notificationManager.notify(tag, id, notification);
+    }
+
+    private Notification getBasicNotification(String stack) {
+        String title = "Current place:";
+        TextView tv = (TextView) findViewById(R.id.textView3);
+        String text = tv.getText().toString();
+
+        // Here I determine the vibration pattern for the notification
+        long[] pattern = {0, 100, 0};
+
+        // Latest update 2015-05-11
+        // Changed to NotificationCompat
+        // Added .bigPicture();
+        // Would like to change pictures in the wearable automatically
+        NotificationCompat.Style style = new NotificationCompat.BigPictureStyle()
+                .bigPicture(BitmapFactory.decodeResource(getResources(), R.mipmap.a));
+
+        return new NotificationCompat.Builder(this)
+                .setSmallIcon(R.mipmap.icon_mdpi)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setStyle(style)
+                .setVibrate(pattern)
+                .setGroup(stack)
+                .build();
     }
 
     @Override
@@ -448,42 +491,6 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
     public void onConnectionSuspended(int i) {
         Log.i(TAG, "Location services suspended. Please reconnect.");
     }
-
-    /**
-     * Show a notification.
-     *
-     * @param id           The notification id
-     * @param tag          The notification tag
-     * @param notification The notification
-     */
-    private void showNotification(int id, String tag, Notification notification) {
-        notificationManager.notify(tag, id, notification);
-    }
-
-    private Notification getBasicNotification(String stack) {
-        String title = "Current place:";
-        TextView tv = (TextView) findViewById(R.id.textView3);
-        String text = tv.getText().toString();
-
-        // Here I determine the vibration pattern for the notification
-        long[] pattern = {0, 100, 0};
-
-        // Latest update 2015-05-11
-        // Changed to NotificationCompat
-        // Added .bigPicture();
-        NotificationCompat.Style style = new NotificationCompat.BigPictureStyle()
-                .bigPicture(BitmapFactory.decodeResource(getResources(), R.id.imageView));
-
-        return new NotificationCompat.Builder(this)
-                .setSmallIcon(R.mipmap.icon_mdpi)
-                .setContentTitle(title)
-                .setContentText(text)
-                .setStyle(style)
-                .setVibrate(pattern)
-                .setGroup(stack)
-                .build();
-    }
-
 
     private String getDirectionsUrl(LatLng origin, LatLng dest) {
 
