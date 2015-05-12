@@ -11,16 +11,13 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.IntentSender;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
-import android.media.Image;
 import android.os.AsyncTask;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -32,7 +29,6 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -47,10 +43,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.wearable.Asset;
-import com.google.android.gms.wearable.DataApi;
-import com.google.android.gms.wearable.PutDataMapRequest;
-import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
 
 import org.json.JSONObject;
@@ -248,6 +240,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
          * https://geolocation.ws/map/55.588227,13.002735/13/en?types=&limit=300&licenses=
          * Dammfrivägen 61 = 55.587116, 12.979788
          */
+        /*
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.61015, 12.9786)).title("Cykelpump Kockums Torg"));
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.5877, 12.9887)).title("Cykelpump Malmö gamla stadion"));
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.6093, 12.9967)).title("Cykelpump, Anna Linds plats"));
@@ -277,7 +270,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.5967, 13.0053)).title("MALMÖ"));
         mMap.addMarker(new MarkerOptions().position(new LatLng(55.5986, 12.9836)).title("Kronprinsen"));
         //mMap.addMarker(new MarkerOptions().position(new LatLng()).title(""));
-
+*/
         // Get LocationManager object from System Service LOCATION_SERVICE
         LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
@@ -453,7 +446,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
                 .bigPicture(BitmapFactory.decodeResource(getResources(), R.mipmap.a));
 
         return new NotificationCompat.Builder(this)
-                .setSmallIcon(R.mipmap.icon_mdpi)
+                .setSmallIcon(R.mipmap.icon_mdpi_border)
                 .setContentTitle(title)
                 .setContentText(text)
                 .setStyle(style)
