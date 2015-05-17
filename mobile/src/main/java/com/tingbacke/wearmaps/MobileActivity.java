@@ -22,9 +22,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NotificationCompat;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.style.StyleSpan;
+import android.text.Html;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -399,7 +397,7 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
 
                 } else if (fake.contains("Dammfrivägen")) {
 //fakear Turning Torso på min adress för tillfället
-                    myAddress.setText("Café, restaurants and beach");
+                    myAddress.setText("Turning Torso" + "\n" + "453m away");
                     myImage.setImageResource(R.mipmap.turning);
                 }
 
@@ -434,34 +432,38 @@ public class MobileActivity extends FragmentActivity implements GoogleApiClient.
     }
 
     private Notification getBasicNotification(String stack) {
-        String title = "";
+        String title = "Västra Hamnen";
         TextView tv = (TextView) findViewById(R.id.textView3);
         String text = tv.getText().toString();
 
         // Here I determine the vibration pattern for the notification
-        long[] pattern = {0, 100, 0};
+        long[] pattern = {0, 200, 0};
 
 /*
         // This seems only to be for adding longer texts to a notification...
         NotificationCompat.BigTextStyle bigTextStyle = new NotificationCompat.BigTextStyle();
         bigTextStyle.setBigContentTitle(title);
 */
-        Spannable sb = new SpannableString(text);
+        /*
+        Spannable sb = new SpannableString("Bold this and italic that.");
         sb.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, 4, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         sb.setSpan(new StyleSpan(android.graphics.Typeface.ITALIC), 14, 20, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+*/
+
+        NotificationCompat.WearableExtender extender = new NotificationCompat.WearableExtender()
+                .setBackground(BitmapFactory.decodeResource(getResources(), R.mipmap.turn));
 
         NotificationCompat.InboxStyle inboxStyle = new NotificationCompat.InboxStyle();
-        inboxStyle.addLine(sb);
-
-        NotificationCompat.Style style = new NotificationCompat.BigPictureStyle()
-                .bigPicture(BitmapFactory.decodeResource(getResources(), R.mipmap.icon_xxxhdpi));
+        inboxStyle.addLine(Html.fromHtml("<b>Turning Torso</b>"));
+        inboxStyle.addLine(Html.fromHtml("<b>453m away</b>"));
 
         return new NotificationCompat.Builder(this)
                 .setSmallIcon(R.mipmap.icon_mdpi)
                 .setContentTitle(title)
                 .setContentText(text)
-                .setStyle(style)
-                .setStyle(inboxStyle)
+                //.setStyle(bigPic)
+                //.setStyle(inboxStyle)
+                        .extend(extender)
                         //.setStyle(bigTextStyle)
                 .setVibrate(pattern)
                 .setGroup(stack)
